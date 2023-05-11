@@ -1,5 +1,3 @@
-This project contains files which download 
-
 
 NOTE SQL queries which were previously successful have been unsuccessful since this code was written.
 
