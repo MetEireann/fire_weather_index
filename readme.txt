@@ -27,3 +27,4 @@ Similarly 'record_length_dataframe.R' produces a dataframe of the start and end 
 
 violin_plots.R produces violin plots (boxplots and Probability Density Functions combined) for the FFMC variable at different timesteps. 
 
+correlations.R does a correlation matrix for all variables at each station 
