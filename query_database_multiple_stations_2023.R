@@ -19,12 +19,6 @@ sql_to_csv <- function(stno){
   
   #read rainfall data, this query calculates rainfall from 12-12 UTC (http://reaserve/trac/wiki/NonDailyRainfall)
   
-  #rainfall <- db_conn(paste("SELECT stno, date_trunc('day',date + date('11 hours')) 
-  #                        AS date_s, sum(rainfall) AS daily_rain_total 
-  #                        FROM hourly WHERE stno = ", paste0(stno),"
-  #                        GROUP BY stno, date_trunc('day',date + date('11 hours')) 
-  #                        ORDER BY 2"))
-  
   alldata <- db_conn(paste("SELECT a.stno, a.date, a.year, a.month, a.day, a.hour, a.speed as wind_speed, a.drybulb as temperature, a.rh as humidity, b.daily_rain_total 
         FROM (select stno, date, year, month, day, hour, speed, drybulb, rh from hourly where stno = ", paste0(stno)," and hour = 12) a,  
         (SELECT stno, date_trunc('day',date + date('11 hours')) AS date_s, round(sum(rainfall),1) AS daily_rain_total 
