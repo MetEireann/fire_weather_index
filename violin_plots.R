@@ -15,19 +15,26 @@ station_names$stno <- as.factor(station_names$stno)
 #read in the data and combine it 
 combined_data <- data.frame()
 
+#folder with fwi output
 folder_path <- "/home/pflattery/fire/fwi_output_final"
 
+
+
+
+#create a list of files for manipulation
 file_list <- list.files(folder_path, full.names = TRUE)
 
 for (file in file_list) {
   # Extract the station number from the filename
-  station_number <- gsub(".csv", "", basename(file))
+  station_number <- gsub("_fwi.csv", "", basename(file))
+  
+  station_name <- station_names$name[station_names$stno == station_number]
   
   # Read the CSV file into a temporary dataframe
   temp_data <- read.csv(file)
   
   # Add a new column with the station number
-  temp_data$Station <- station_number
+  temp_data$Station <- paste(station_number, station_name)
   yr <- temp_data$YR
   mon <- temp_data$MON
   day <- temp_data$DAY
@@ -37,6 +44,8 @@ for (file in file_list) {
   # Append the temporary dataframe to the combined dataframe
   combined_data <- rbind(combined_data, temp_data)
 }
+
+
 
 # Filter out stations without data for the full 30-year period
 # Group the data by Station
@@ -70,6 +79,7 @@ plot <- ggplot(combined_data, aes(x=Station, y=FFMC, fill=Station)) +
 plot_81_10 <- ggplot(filtered_data_1981_2010, aes(x=Station, y=FFMC, fill=Station)) + 
   geom_violin(trim=FALSE) +
   geom_boxplot(width=0.1, fill="white")+
+  labs(x = "Station", y = "FFMC", title = "Fine Fuel Moisture Content (FFMC) at Synoptic Stations 1981-2010") +
   theme_classic()
 
 plot_81_10
@@ -77,6 +87,7 @@ plot_81_10
 plot_91_20 <- ggplot(filtered_data_1991_2020, aes(x=Station, y=FFMC, fill=Station)) + 
   geom_violin(trim=FALSE) +
   geom_boxplot(width=0.1, fill="white")+
+  labs(x = "Station", y = "FFMC", title = "Fine Fuel Moisture Content (FFMC) at Synoptic Stations 1991-2020") +
   theme_classic()
 
 plot_91_20
@@ -96,22 +107,23 @@ merged_data <- rbind(filtered_data_1981_2010, filtered_data_1991_2020)
 y_axis_limits <- range(merged_data$FFMC)
 
 # Create the violin plot for 1981-1990 data
-plot_1981_1990 <- ggplot(filtered_data_1981_2010, aes(x = Station, y = FFMC, fill = Station)) +
+plot_1981_2010 <- ggplot(filtered_data_1981_2010, aes(x = Station, y = FFMC, fill = Station)) +
   geom_violin(trim = FALSE, scale = "width") +
   scale_y_continuous(limits = y_axis_limits) +
-  labs(x = "Station", y = "FFMC", title = "Violin Plots of FFMC (1981-1990)") +
+  labs(x = "Station", y = "FFMC", title = "Violin Plots of FFMC (1981-2010)") +
   theme_minimal() +
   theme(legend.position = "none")
 
 # Create the violin plot for 1991-2020 data
-plot_1991_2020 <- ggplot(filtered_data_1991_2020, aes(x = Station, y = FFMC, fill = Station)) +
+plot_1991_2020 <- ggplot(filtered_data_1991_2020, 
+                         aes(x = Station, y = FFMC, 
+                             fill = Station)) +
   geom_violin(trim = FALSE, scale = "width") +
   scale_y_continuous(limits = y_axis_limits) +
   labs(x = "Station", y = "FFMC", title = "Violin Plots of FFMC (1991-2020)") +
   theme_minimal()
 
 # Arrange the plots side by side
-combined_plot <- grid.arrange(plot_1981_1990, plot_1991_2020, ncol = 2)
+combined_plot <- grid.arrange(plot_1981_2010, plot_1991_2020, ncol = 2)
 
-# Print the combined plot
-print(combined_plot)
+

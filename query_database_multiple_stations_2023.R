@@ -25,34 +25,38 @@ sql_to_csv <- function(stno){
   #                        GROUP BY stno, date_trunc('day',date + date('11 hours')) 
   #                        ORDER BY 2"))
   
-  rainfall <- db_conn(paste("SELECT stno, 
-  date_trunc('day',date + date('11 hours')) 
-                            AS date_s, sum(rainfall) 
-                            AS daily_rain_total 
-                            FROM hourly 
-                            WHERE stno =",  paste0(stno)," 
-                            GROUP BY stno, 
-                            date_trunc('day',date + date('11 hours')) 
-                            ORDER BY date_s"))
+  alldata <- db_conn(paste("SELECT a.stno, a.date, a.year, a.month, a.day, a.hour, a.speed as wind_speed, a.drybulb as temperature, a.rh as humidity, b.daily_rain_total 
+        FROM (select stno, date, year, month, day, hour, speed, drybulb, rh from hourly where stno = ", paste0(stno)," and hour = 12) a,  
+        (SELECT stno, date_trunc('day',date + date('11 hours')) AS date_s, round(sum(rainfall),1) AS daily_rain_total 
+                FROM hourly 
+                WHERE stno = ", paste0(stno),"
+                GROUP BY stno, date_trunc('day',date + date('11 hours'))) b 
+        WHERE a.stno = b.stno 
+                AND a.year = DATE_PART('YEAR',b.date_s)
+                AND a.month = DATE_PART('MONTH',b.date_s)
+                AND a.day = DATE_PART('DAY',b.date_s)
+        ORDER BY a.date"))
   
   #change name of column for merge later
-  setnames(rainfall, "date_s", "date")
+  #setnames(rainfall, "date_s", "date")
   
   #read in the other data variables daily at 12pm 
-  othervars <- db_conn(paste("select stno,date,speed,drybulb,rh from hourly 
-  where stno = ", paste0(stno)," and hour = 12"))
+  #othervars <- db_conn(paste("select stno,date,speed,drybulb,rh from hourly 
+  #where stno = ", paste0(stno)," and hour = 12"))
   
   #set date column as a date column
-  rainfall$date <- as.Date(rainfall$date)
-  othervars$date <- as.Date(othervars$date)
+  #rainfall$date <- as.Date(rainfall$date)
+  #othervars$date <- as.Date(othervars$date)
+  
+  alldata$date <- as.Date(alldata$date)
   
   #merge the data using dplyr
-  alldata <- left_join(othervars, rainfall, by=c("stno","date"))
+  #alldata <- left_join(othervars, rainfall, by=c("stno","date"))
   
   #change the variable names to more intuitive ones using data.table package
-  setnames(alldata, "drybulb", "Temperature (C)")
-  setnames(alldata, "speed", "Windspeed (knots)")
-  setnames(alldata, "rh", "Relative Humidity (%)")
+  setnames(alldata, "temperature", "Temperature (C)")
+  setnames(alldata, "wind_speed", "Windspeed (knots)")
+  setnames(alldata, "humidity", "Relative Humidity (%)")
   setnames(alldata, "daily_rain_total", "Total Rain (mm)")
   
   #arrange by date
