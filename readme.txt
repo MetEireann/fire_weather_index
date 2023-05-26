@@ -1,15 +1,18 @@
+The data input for the Fire Weather Index requires rainfall sums from 12pm-12pm, which is non-daily (see here: http://reaserve/trac/wiki/NonDailyRainfall).
 
-NOTE SQL queries which were previously successful have been unsuccessful since this code was written.
+Conor Lally came up with this sql query which gives 12-12 sum or rainfall along with the date and other variables at 12pm (this example is for stno=305). 
 
-This SQL to calculate daily rainfall sums at 12 worked 11/05/2023:
-
-This SQL for daily sums of rainfall:
-SELECT stno, date_trunc('day',date + date('11 hours')) AS date_s, sum(rainfall) AS daily_rain_total FROM hourly WHERE stno = 305 GROUP BY stno, date_trunc('day',date + date('11 hours')) ORDER BY 2
-
-Then use R to join these together. 
-
-This will produce the data that is located in /home/pflattery/fire/output/. Since this is already there and this work has been done previously, 
-the SQL in the scripts 'query_database.R' and 'query_database_multiple_stations.R' may have to be changed and may not work. 
+SELECT a.stno, a.date, a.year, a.month, a.day, a.hour, a.speed as wind_speed, a.drybulb as temperature, a.rh as humidity, b.daily_rain_total 
+        FROM (select stno, date, year, month, day, hour, speed, drybulb, rh from hourly where stno = 305 and hour = 12) a,  
+        (SELECT stno, date_trunc('day',date + date('11 hours')) AS date_s, round(sum(rainfall),1) AS daily_rain_total 
+                FROM hourly 
+                WHERE stno = 305
+                GROUP BY stno, date_trunc('day',date + date('11 hours'))) b 
+        WHERE a.stno = b.stno 
+                AND a.year = DATE_PART('YEAR',b.date_s)
+                AND a.month = DATE_PART('MONTH',b.date_s)
+                AND a.day = DATE_PART('DAY',b.date_s)
+        ORDER BY a.date
 
 
 The workflow is as follows: 
